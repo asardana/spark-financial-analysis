@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SparkFinancialAnalysis.iml" filepath="$PROJECT_DIR$/.idea/modules/SparkFinancialAnalysis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SparkFinancialAnalysis_main.iml" filepath="$PROJECT_DIR$/.idea/modules/SparkFinancialAnalysis_main.iml" group="SparkFinancialAnalysis" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SparkFinancialAnalysis_test.iml" filepath="$PROJECT_DIR$/.idea/modules/SparkFinancialAnalysis_test.iml" group="SparkFinancialAnalysis" />
+    </modules>
+  </component>
+</project>
