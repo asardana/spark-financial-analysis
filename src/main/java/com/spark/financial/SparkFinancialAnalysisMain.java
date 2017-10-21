@@ -88,7 +88,9 @@ public class SparkFinancialAnalysisMain {
             } else {
                 System.out.println("Invalid Record line " + line);
             }
+
             return loanDataRecord;
+
         }).filter(record -> record.getFundedAmt() != null);
 
         // Print any invalid record

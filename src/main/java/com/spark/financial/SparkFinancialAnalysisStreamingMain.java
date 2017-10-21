@@ -26,22 +26,27 @@ public class SparkFinancialAnalysisStreamingMain {
 
         SparkFinancialAnalysisStreamingMain sparkStreamingFinMain = new SparkFinancialAnalysisStreamingMain();
 
+        // Perform aggregation on the Streaming Data
         sparkStreamingFinMain.aggregateOnStreamingData(sparkConf);
 
 
     }
     /**
-     * Reads the Streaming data from the file system
+     * Reads the Streaming data from the file system and converts to a Dataset for running Spark SQL queries
      * @param conf
      */
     public void aggregateOnStreamingData(SparkConf conf){
 
+        // Creates Java Streaming Context with batch size of 10 seconds
         JavaStreamingContext streamingContext = new JavaStreamingContext(conf, Durations.seconds(10));
 
-        JavaDStream<String> loadStatsStream = streamingContext.textFileStream("/tmp/streaming");
+        JavaDStream<String> loanStatsStream = streamingContext.textFileStream("/bigdata/streaming");
 
         // Convert the streams of JavaRDD of Strings to JavaRDD of Java Beans
-        loadStatsStream.foreachRDD((JavaRDD<String> loanStatsTextRDD) -> {
+        loanStatsStream.foreachRDD((JavaRDD<String> loanStatsTextRDD) -> {
+
+           // Flag to indicate if at least some records have been received and aggregated
+            boolean isAggregatedDataAvailable = false;
 
             JavaRDD<LoanDataRecord> loanDataRecordRDD =  loanStatsTextRDD.map((line) -> {
 
@@ -66,30 +71,61 @@ public class SparkFinancialAnalysisStreamingMain {
                 }else {
                     System.out.println("Invalid Record line " + line);
                 }
+                
                 return loanDataRecord;
+                
             }).filter(record -> record.getFundedAmt()!=null);
 
+            // Create Spark Session
             SparkSession session = SparkSession.builder().config(conf).getOrCreate();
 
+            // Create a Dataset of Rows (Dataframe) from the RDD of LoanDataRecord
             Dataset<Row> loanStatFullDataset = session.createDataFrame(loanDataRecordRDD, LoanDataRecord.class);
 
             loanStatFullDataset.show();
 
+            // Is data available in the Stream, save the data in Parquet format for future use. Also, calculate the total
+            // funding amount for a given state
+
             if(!loanStatFullDataset.rdd().isEmpty()) {
 
-                loanStatFullDataset.write().mode(SaveMode.Append).parquet("/tmp/loanStatFullDataset");
+                loanStatFullDataset.write().mode(SaveMode.Append).parquet("/bigdata/loanStatFullDataset");
 
+                isAggregatedDataAvailable = true;
 
-                System.out.println("Streaming Financial Statistics Record count " + loanStatFullDataset.count());
+                System.out.println("Streaming Financial Statistics Record count in current file " + loanStatFullDataset.count());
 
-                // Calculate the total funding amount for a given State
+                // Calculate the total funding amount for a given State in current file of streaming records
                 List<String> fundedAmountsForState = loanStatFullDataset.javaRDD().filter(row -> "IL".equalsIgnoreCase(row.getString(0))).map(row -> row.getString(2)).collect();
 
                 String totalFundedAmountForState = fundedAmountsForState.stream().reduce((x,y) -> Double.toString(Double.parseDouble(x) + Double.parseDouble(y))).get();
 
-                System.out.println("Total Amount funded by Lending Club in IL State : $" + new BigDecimal(totalFundedAmountForState).toPlainString());
+                System.out.println("Total Amount funded by Lending Club in IL State in current file : $" + new BigDecimal(totalFundedAmountForState).toPlainString());
             }
 
+            try{
+
+                // Check if the aggregated data is available in the parquet file
+                if(isAggregatedDataAvailable) {
+
+                    // Read the aggregated data from the parquet File for batch records received so far
+                    Dataset<Row> aggregatedLoanDataParquet = session.read().parquet("/bigdata/loanStatFullDataset");
+
+                    if (!aggregatedLoanDataParquet.rdd().isEmpty()) {
+
+                        System.out.println("Streaming Financial Statistics aggregated Record count " + aggregatedLoanDataParquet.count());
+
+                        // Calculate the total funding amount for a given State in current file of streaming records
+                        List<String> fundedAmountsForStateAgg = aggregatedLoanDataParquet.javaRDD().filter(row -> "IL".equalsIgnoreCase(row.getString(0))).map(row -> row.getString(2)).collect();
+
+                        String totalFundedAmountForStateAgg = fundedAmountsForStateAgg.stream().reduce((x, y) -> Double.toString(Double.parseDouble(x) + Double.parseDouble(y))).get();
+
+                        System.out.println("Aggregated Total Amount funded by Lending Club in IL State : $" + new BigDecimal(totalFundedAmountForStateAgg).toPlainString());
+                    }
+                }
+            }catch(Exception ex){
+                System.out.println("Error while processing the aggregated data");
+            }
         });
 
         try {
