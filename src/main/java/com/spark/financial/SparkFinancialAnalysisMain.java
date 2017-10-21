@@ -29,11 +29,13 @@ public class SparkFinancialAnalysisMain {
         SparkFinancialAnalysisMain sparkFinMain = new SparkFinancialAnalysisMain();
 
         // Read the file using SparkSession
-        //sparkFinMain.readDataFromFile(session);
+        sparkFinMain.readDataFromFile(session);
 
+        // Aggregate data by creating Dataset from JavaBean RDD
         sparkFinMain.aggregateDataUsingReflection(session);
 
-        //sparkFinMain.aggregateDataUsingStructType(session);
+        // Aggregate data by creating Dataset from Row RDD
+        sparkFinMain.aggregateDataUsingStructType(session);
 
     }
 
@@ -45,7 +47,7 @@ public class SparkFinancialAnalysisMain {
      */
     public void readDataFromFile(SparkSession session) {
 
-        Dataset<Row> loanStatsDataset = session.read().csv("/tmp/LoanStats_2017Q2.csv");
+        Dataset<Row> loanStatsDataset = session.read().csv("/bigdata/LoanStats_2017Q2.csv");
         System.out.println("Printing DataFrame in readDataFromFile");
         loanStatsDataset.printSchema();
         loanStatsDataset.show();
@@ -60,8 +62,7 @@ public class SparkFinancialAnalysisMain {
     public void aggregateDataUsingReflection(SparkSession session) {
 
         // Read the Loan Stats in a JavaRDD of Strings
-         JavaRDD<String> loanStatsTextRDD = session.read().textFile("/tmp/LoanStats_2017Q2.csv").javaRDD();
-          //JavaRDD<String> loanStatsTextRDD = session.read().textFile("/tmp/single.csv").javaRDD();
+         JavaRDD<String> loanStatsTextRDD = session.read().textFile("/bigdata/LoanStats_2017Q2.csv").javaRDD();
 
         // Convert the JavaRDD of Strings to JavaRDD of Java Beans
         JavaRDD<LoanDataRecord> loanDataRecordRDD = loanStatsTextRDD.map((line) -> {
@@ -113,9 +114,10 @@ public class SparkFinancialAnalysisMain {
         Dataset<Row> loanStatStateFilter = session.sql("SELECT * FROM loan_statistics_reflection where addressState='IL'");
 
         // Write the filtered record to the file system in CSV format
-        loanStatStateFilter.write().mode(SaveMode.Overwrite).csv("/tmp/loanStatILState.csv");
+        loanStatStateFilter.write().mode(SaveMode.Overwrite).csv("/bigdata/loanStatILState.csv");
 
         loanStatStateFilter.show();
+
         // Calculate the total amount for a given State
         List<String> fundedAmountsForState = loanStatStateFilter.javaRDD().map(row -> row.getString(2)).collect();
 
@@ -140,7 +142,7 @@ public class SparkFinancialAnalysisMain {
     public void aggregateDataUsingStructType(SparkSession session) {
 
         // Read the Loan Stats in a JavaRDD of Strings
-        JavaRDD<String> loanStatsTextRDD = session.read().textFile("/tmp/LoanStats_2017Q2.csv").javaRDD();
+        JavaRDD<String> loanStatsTextRDD = session.read().textFile("/bigdata/LoanStats_2017Q2.csv").javaRDD();
 
         // Convert the JavaRDD of Strings to JavaRDD of Row. Also, remove any rows with invalid data or null records
         JavaRDD<Row> loanStatsRowRDD = loanStatsTextRDD.map((line) -> {
@@ -196,11 +198,11 @@ public class SparkFinancialAnalysisMain {
 
         loanStatStateFilter.show();
 
-        loanStatStateFilter.write().mode(SaveMode.Overwrite).parquet("/tmp/loanStatStateFilter.parquet");
+        loanStatStateFilter.write().mode(SaveMode.Overwrite).parquet("/bigdata/loanStatStateFilter.parquet");
 
         // This is to demonstarte how the data stored in the parquet can be read into a Dataset
 
-        Dataset<Row> loanStatStateParquet = session.read().parquet("/tmp/loanStatStateFilter.parquet");
+        Dataset<Row> loanStatStateParquet = session.read().parquet("/bigdata/loanStatStateFilter.parquet");
 
         System.out.println("Printing DataFrame after reading from Parquet");
 
