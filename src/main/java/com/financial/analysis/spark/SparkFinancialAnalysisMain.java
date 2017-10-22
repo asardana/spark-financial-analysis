@@ -1,4 +1,4 @@
-package com.spark.financial;
+package com.financial.analysis.spark;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;

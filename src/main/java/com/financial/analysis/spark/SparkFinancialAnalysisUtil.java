@@ -1,4 +1,4 @@
-package com.spark.financial;
+package com.financial.analysis.spark;
 
 /**
  * Created by Aman on 10/14/2017.

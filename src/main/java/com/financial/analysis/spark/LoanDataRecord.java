@@ -1,4 +1,4 @@
-package com.spark.financial;
+package com.financial.analysis.spark;
 
 import java.io.Serializable;
 

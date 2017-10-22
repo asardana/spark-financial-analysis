@@ -1,4 +1,4 @@
-group 'com.spark.financial'
+group 'com.financial.analysis.spark'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
