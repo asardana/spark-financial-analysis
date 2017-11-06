@@ -32,10 +32,10 @@ public class SparkFinancialAnalysisMain {
         sparkFinMain.readDataFromFile(session);
 
         // Aggregate data by creating Dataset from JavaBean RDD
-        sparkFinMain.aggregateDataUsingReflection(session);
+        //sparkFinMain.aggregateDataUsingReflection(session);
 
         // Aggregate data by creating Dataset from Row RDD
-        sparkFinMain.aggregateDataUsingStructType(session);
+        //sparkFinMain.aggregateDataUsingStructType(session);
 
     }
 
