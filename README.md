@@ -18,12 +18,10 @@ The code discussed in this post is available on Github.
 
 In order to get started, create a new Java project and include the following dependencies.
 
-1
-2
-3
 compile group: 'org.apache.spark', name: 'spark-core_2.10', version: '2.2.0'
 compile group: 'org.apache.spark', name: 'spark-streaming_2.10', version: '2.2.0'
 compile group: 'org.apache.spark', name: 'spark-sql_2.10', version: '2.2.0'
+
 SparkFinancialAnalysisMain is the main class where we define the Spark Configuration. In this case we are running the Spark application locally and hence the master is set as “local[*]” to use as many logical cores available in the local machine. This helps in running the tasks in parallel on the distributed data available in the memory for fast processing.
 
 1
